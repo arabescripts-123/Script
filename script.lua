@@ -48,36 +48,289 @@ do
         playSound("2865227271")
 
         -----------------------------------------------------------------
-        -- RAYFIELD LOAD
+        -- GUI CUSTOMIZADA
         -----------------------------------------------------------------
-        local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
-        local Window = Rayfield:CreateWindow({
-            Name = "ArabeScripts",
-            LoadingTitle = "ArabeScripts Hub",
-            LoadingSubtitle = "By ArabeScripts",
-            ConfigurationSaving = {
-                Enabled = false
-            },
-        })
-
-        -----------------------------------------------------------------
-        -- SHARED HELPERS
-        -----------------------------------------------------------------
-        local function getRoot()
-            local c = LocalPlayer.Character
-            return c and c:FindFirstChild("HumanoidRootPart") or nil
-        end
-
-        local function getNearbyParts(position, radius)
-            local ok, parts = pcall(function()
-                return workspace:GetPartBoundsInRadius(position, radius, nil)
-            end)
-            if ok and parts then
-                return parts
+        pcall(function()
+            if Services.CoreGui:FindFirstChild("ArabeScriptsGui") then
+                Services.CoreGui:FindFirstChild("ArabeScriptsGui"):Destroy()
             end
-            return {}
+        end)
+
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "ArabeScriptsGui"
+        ScreenGui.ResetOnSpawn = false
+        ScreenGui.Parent = Services.CoreGui
+
+        local MainFrame = Instance.new("Frame")
+        MainFrame.Parent = ScreenGui
+        MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        MainFrame.Position = UDim2.new(0.02, 0, 0.3, 0)
+        MainFrame.Size = UDim2.new(0, 220, 0, 510)
+        MainFrame.ClipsDescendants = true
+
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 8)
+        UICorner.Parent = MainFrame
+
+        local UIStroke = Instance.new("UIStroke")
+        UIStroke.Parent = MainFrame
+        UIStroke.Color = Color3.fromRGB(0, 0, 0)
+        UIStroke.Thickness = 3
+
+        local Title = Instance.new("TextLabel")
+        Title.Parent = MainFrame
+        Title.BackgroundTransparency = 1
+        Title.Size = UDim2.new(1, -40, 0, 35)
+        Title.Font = Enum.Font.GothamBold
+        Title.Text = "ArabeScripts"
+        Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Title.TextSize = 16
+        Title.TextXAlignment = Enum.TextXAlignment.Left
+        Title.Position = UDim2.new(0, 10, 0, 0)
+        Title.Active = true
+
+        -- Dragging
+        local dragging, dragInput, dragStart, startPos
+        Title.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                dragStart = input.Position
+                startPos = MainFrame.Position
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end)
+
+        Title.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement then
+                dragInput = input
+            end
+        end)
+
+        Services.UserInputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                local delta = input.Position - dragStart
+                MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+
+        -- Tabs Container
+        local TabsFrame = Instance.new("Frame")
+        TabsFrame.Parent = MainFrame
+        TabsFrame.BackgroundTransparency = 1
+        TabsFrame.Position = UDim2.new(0, 0, 0, 35)
+        TabsFrame.Size = UDim2.new(1, 0, 0, 30)
+
+        local function createTab(name, pos)
+            local tab = Instance.new("TextButton")
+            tab.Parent = TabsFrame
+            tab.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            tab.Position = UDim2.new(0, pos, 0, 0)
+            tab.Size = UDim2.new(0, 52, 0, 28)
+            tab.Font = Enum.Font.Gotham
+            tab.Text = name
+            tab.TextColor3 = Color3.fromRGB(200, 200, 200)
+            tab.TextSize = 10
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 6)
+            corner.Parent = tab
+            return tab
         end
+
+        local tab1 = createTab("Anel", 5)
+        local tab2 = createTab("Voo", 59)
+        local tab3 = createTab("Deus", 113)
+        local tab4 = createTab("TP", 167)
+
+        -- Content Frames
+        local Content1 = Instance.new("ScrollingFrame")
+        Content1.Parent = MainFrame
+        Content1.BackgroundTransparency = 1
+        Content1.Position = UDim2.new(0, 0, 0, 70)
+        Content1.Size = UDim2.new(1, 0, 1, -70)
+        Content1.ScrollBarThickness = 4
+        Content1.BorderSizePixel = 0
+        Content1.Visible = true
+        Content1.CanvasSize = UDim2.new(0, 0, 0, 800)
+
+        local Content2 = Instance.new("ScrollingFrame")
+        Content2.Parent = MainFrame
+        Content2.BackgroundTransparency = 1
+        Content2.Position = UDim2.new(0, 0, 0, 70)
+        Content2.Size = UDim2.new(1, 0, 1, -70)
+        Content2.ScrollBarThickness = 4
+        Content2.BorderSizePixel = 0
+        Content2.Visible = false
+        Content2.CanvasSize = UDim2.new(0, 0, 0, 600)
+
+        local Content3 = Instance.new("ScrollingFrame")
+        Content3.Parent = MainFrame
+        Content3.BackgroundTransparency = 1
+        Content3.Position = UDim2.new(0, 0, 0, 70)
+        Content3.Size = UDim2.new(1, 0, 1, -70)
+        Content3.ScrollBarThickness = 4
+        Content3.BorderSizePixel = 0
+        Content3.Visible = false
+        Content3.CanvasSize = UDim2.new(0, 0, 0, 800)
+
+        local Content4 = Instance.new("ScrollingFrame")
+        Content4.Parent = MainFrame
+        Content4.BackgroundTransparency = 1
+        Content4.Position = UDim2.new(0, 0, 0, 70)
+        Content4.Size = UDim2.new(1, 0, 1, -70)
+        Content4.ScrollBarThickness = 4
+        Content4.BorderSizePixel = 0
+        Content4.Visible = false
+        Content4.CanvasSize = UDim2.new(0, 0, 0, 700)
+
+        -- Helper Functions
+        local function createButton(name, parent, yPos)
+            local btn = Instance.new("TextButton")
+            btn.Parent = parent
+            btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+            btn.Position = UDim2.new(0, 10, 0, yPos)
+            btn.Size = UDim2.new(0, 200, 0, 35)
+            btn.Font = Enum.Font.Gotham
+            btn.Text = name
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.TextSize = 13
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 6)
+            corner.Parent = btn
+            local indicator = Instance.new("Frame")
+            indicator.Parent = btn
+            indicator.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+            indicator.Position = UDim2.new(1, -25, 0.5, -8)
+            indicator.Size = UDim2.new(0, 16, 0, 16)
+            indicator.BorderSizePixel = 0
+            local indicatorCorner = Instance.new("UICorner")
+            indicatorCorner.CornerRadius = UDim.new(1, 0)
+            indicatorCorner.Parent = indicator
+            return btn, indicator
+        end
+
+        local function createSlider(name, parent, yPos, min, max, default)
+            local label = Instance.new("TextLabel")
+            label.Parent = parent
+            label.BackgroundTransparency = 1
+            label.Position = UDim2.new(0, 10, 0, yPos)
+            label.Size = UDim2.new(0, 200, 0, 15)
+            label.Font = Enum.Font.Gotham
+            label.Text = name .. ": " .. default
+            label.TextColor3 = Color3.fromRGB(200, 200, 200)
+            label.TextSize = 11
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            
+            local track = Instance.new("Frame")
+            track.Parent = parent
+            track.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            track.Position = UDim2.new(0, 10, 0, yPos + 20)
+            track.Size = UDim2.new(0, 200, 0, 6)
+            track.BorderSizePixel = 0
+            local trackCorner = Instance.new("UICorner")
+            trackCorner.CornerRadius = UDim.new(1, 0)
+            trackCorner.Parent = track
+            
+            local handle = Instance.new("Frame")
+            handle.Parent = track
+            handle.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+            handle.Position = UDim2.new((default - min) / (max - min), 0, 0.5, -8)
+            handle.Size = UDim2.new(0, 16, 0, 16)
+            handle.BorderSizePixel = 0
+            local handleCorner = Instance.new("UICorner")
+            handleCorner.CornerRadius = UDim.new(1, 0)
+            handleCorner.Parent = handle
+            
+            return label, track, handle
+        end
+
+        -- Toggle Z key
+        Services.UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.KeyCode == Enum.KeyCode.Z then
+                MainFrame.Visible = not MainFrame.Visible
+            end
+        end)
+
+        -----------------------------------------------------------------
+        -- ABA 1: ANEL
+        -----------------------------------------------------------------
+        local ringBtn, ringIndicator = createButton("Partes do Anel", Content1, 5)
+        ringBtn.MouseButton1Click:Connect(function()
+            Ring.Enabled = not Ring.Enabled
+            ringIndicator.BackgroundColor3 = Ring.Enabled and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
+            playSound("12221967")
+        end)
+
+        local radiusLabel, radiusTrack, radiusHandle = createSlider("Raio", Content1, 50, 10, 200, Ring.Radius)
+        local radiusDragging = false
+        radiusHandle.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then radiusDragging = true end
+        end)
+        Services.UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then radiusDragging = false end
+        end)
+        Services.UserInputService.InputChanged:Connect(function(input)
+            if radiusDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local mousePos = Services.UserInputService:GetMouseLocation()
+                local trackPos = radiusTrack.AbsolutePosition.X
+                local trackSize = radiusTrack.AbsoluteSize.X
+                local relativePos = math.clamp(mousePos.X - trackPos, 0, trackSize)
+                local percentage = relativePos / trackSize
+                Ring.Radius = math.floor(10 + (percentage * 190))
+                radiusHandle.Position = UDim2.new(percentage, 0, 0.5, -8)
+                radiusLabel.Text = "Raio: " .. Ring.Radius
+                playSound("12221967")
+            end
+        end)
+
+        local forceLabel, forceTrack, forceHandle = createSlider("Força", Content1, 90, 200, 2500, Ring.Force)
+        local forceDragging = false
+        forceHandle.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then forceDragging = true end
+        end)
+        Services.UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then forceDragging = false end
+        end)
+        Services.UserInputService.InputChanged:Connect(function(input)
+            if forceDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local mousePos = Services.UserInputService:GetMouseLocation()
+                local trackPos = forceTrack.AbsolutePosition.X
+                local trackSize = forceTrack.AbsoluteSize.X
+                local relativePos = math.clamp(mousePos.X - trackPos, 0, trackSize)
+                local percentage = relativePos / trackSize
+                Ring.Force = math.floor(200 + (percentage * 2300))
+                forceHandle.Position = UDim2.new(percentage, 0, 0.5, -8)
+                forceLabel.Text = "Força: " .. Ring.Force
+                playSound("12221967")
+            end
+        end)
+
+        local speedLabel, speedTrack, speedHandle = createSlider("Velocidade", Content1, 130, 1, 24, Ring.Speed)
+        local speedDragging = false
+        speedHandle.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then speedDragging = true end
+        end)
+        Services.UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then speedDragging = false end
+        end)
+        Services.UserInputService.InputChanged:Connect(function(input)
+            if speedDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local mousePos = Services.UserInputService:GetMouseLocation()
+                local trackPos = speedTrack.AbsolutePosition.X
+                local trackSize = speedTrack.AbsoluteSize.X
+                local relativePos = math.clamp(mousePos.X - trackPos, 0, trackSize)
+                local percentage = relativePos / trackSize
+                Ring.Speed = math.floor(1 + (percentage * 23))
+                Ring.RotSpeed = Ring.Speed
+                speedHandle.Position = UDim2.new(percentage, 0, 0.5, -8)
+                speedLabel.Text = "Velocidade: " .. Ring.Speed
+                playSound("12221967")
+            end
+        end)
 
         -----------------------------------------------------------------
         -- NETWORK / BASE RING INFRA
@@ -1203,12 +1456,12 @@ do
         -----------------------------------------------------------------
 
         -- MAIN / RING TAB
-        local RingTab = Window:CreateTab("Ring Parts", 4483362458)
+        local RingTab = Window:CreateTab("Partes do Anel", 4483362458)
 
-        RingTab:CreateSection("Ring Control")
+        RingTab:CreateSection("Controle do Anel")
 
         RingTab:CreateToggle({
-            Name = "Ring Parts",
+            Name = "Partes do Anel",
             CurrentValue = false,
             Callback = function(Value)
                 Ring.Enabled = Value
@@ -1217,7 +1470,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Radius",
+            Name = "Raio",
             Range = {10, 200},
             Increment = 5,
             CurrentValue = Ring.Radius,
@@ -1228,7 +1481,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Inner Radius",
+            Name = "Raio Interno",
             Range = {2, 20},
             Increment = 1,
             CurrentValue = Ring.MinDist,
@@ -1239,7 +1492,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Height Offset",
+            Name = "Deslocamento de Altura",
             Range = {0, 20},
             Increment = 1,
             CurrentValue = Ring.HeightOffset,
@@ -1250,7 +1503,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Ring Force",
+            Name = "Força do Anel",
             Range = {200, 2500},
             Increment = 100,
             CurrentValue = Ring.Force,
@@ -1261,7 +1514,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Ring Speed",
+            Name = "Velocidade do Anel",
             Range = {1, 24},
             Increment = 1,
             CurrentValue = Ring.Speed,
@@ -1273,7 +1526,7 @@ do
         })
 
         RingTab:CreateDropdown({
-            Name = "Pattern",
+            Name = "Padrão",
             Options = {"Orbit","Vertical","Wave","Sphere","SpherePulsing","Chaos","Spiral","Helix","Pulse","RandomShell"},
             CurrentOption = {Ring.Pattern},
             MultipleOptions = false,
@@ -1286,12 +1539,12 @@ do
         -----------------------------------------------------------------
         -- FLIGHT TAB
         -----------------------------------------------------------------
-        local FlightTab = Window:CreateTab("Flight", 4483362458)
+        local FlightTab = Window:CreateTab("Voo", 4483362458)
 
-        FlightTab:CreateSection("Flight Control")
+        FlightTab:CreateSection("Controle de Voo")
 
         FlightTab:CreateToggle({
-            Name = "Flight",
+            Name = "Voo",
             CurrentValue = false,
             Callback = function(Value)
                 if Value then
@@ -1303,7 +1556,7 @@ do
         })
 
         FlightTab:CreateSlider({
-            Name = "Flight Speed",
+            Name = "Velocidade de Voo",
             Range = {10, 300},
             Increment = 5,
             CurrentValue = Movement.FlightSpeed,
@@ -1314,7 +1567,7 @@ do
         })
 
         FlightTab:CreateSlider({
-            Name = "WalkSpeed",
+            Name = "Velocidade de Caminhada",
             Range = {8, 200},
             Increment = 2,
             CurrentValue = Movement.BaseWalk,
@@ -1326,7 +1579,7 @@ do
         })
 
         FlightTab:CreateSlider({
-            Name = "JumpPower",
+            Name = "Poder de Pulo",
             Range = {20, 300},
             Increment = 5,
             CurrentValue = Movement.BaseJump,
@@ -1340,11 +1593,11 @@ do
         -----------------------------------------------------------------
         -- GODMODE TAB
         -----------------------------------------------------------------
-        local GodTab = Window:CreateTab("Godmode", 4483362458)
-        GodTab:CreateSection("Godmode Control")
+        local GodTab = Window:CreateTab("Modo Deus", 4483362458)
+        GodTab:CreateSection("Controle do Modo Deus")
 
         GodTab:CreateToggle({
-            Name = "Godmode",
+            Name = "Modo Deus",
             CurrentValue = false,
             Callback = function(Value)
                 God.Enabled = Value
@@ -1360,7 +1613,7 @@ do
         })
 
         GodTab:CreateSlider({
-            Name = "Auto-Heal Threshold %",
+            Name = "Limite de Cura Automática %",
             Range = {God.MinHeal, God.MaxHeal},
             Increment = 5,
             CurrentValue = God.HealThresh,
@@ -1371,7 +1624,7 @@ do
         })
 
         GodTab:CreateSlider({
-            Name = "Max Health",
+            Name = "Vida Máxima",
             Range = {God.MinMaxHP, God.MaxMaxHP},
             Increment = 50,
             CurrentValue = Movement.BaseMaxHP,
@@ -1382,7 +1635,7 @@ do
         })
 
         GodTab:CreateToggle({
-            Name = "Anti-Fall Damage",
+            Name = "Anti-Dano de Queda",
             CurrentValue = God.AntiFall,
             Callback = function(Value)
                 God.AntiFall = Value
@@ -1393,12 +1646,12 @@ do
         -----------------------------------------------------------------
         -- ADVANCED / NOCLIP TAB
         -----------------------------------------------------------------
-        local AdvancedTab = Window:CreateTab("Advanced", 4483362458)
+        local AdvancedTab = Window:CreateTab("Avançado", 4483362458)
 
-        AdvancedTab:CreateSection("Movement & Utility")
+        AdvancedTab:CreateSection("Movimento e Utilidades")
 
         AdvancedTab:CreateToggle({
-            Name = "Noclip",
+            Name = "Atravessar Paredes",
             CurrentValue = false,
             Callback = function(Value)
                 Noclip.Enabled = Value
@@ -1410,7 +1663,7 @@ do
         })
 
         AdvancedTab:CreateToggle({
-            Name = "Anti AFK",
+            Name = "Anti-AFK",
             CurrentValue = false,
             Callback = function(Value)
                 AntiAFK.Enabled = Value
@@ -1431,7 +1684,7 @@ do
         })
 
         AdvancedTab:CreateToggle({
-            Name = "Auto Rejoin",
+            Name = "Reconectar Automático",
             CurrentValue = false,
             Callback = function(Value)
                 AutoRejoin.Enabled = Value
@@ -1442,12 +1695,12 @@ do
         -----------------------------------------------------------------
         -- TELEPORT TAB
         -----------------------------------------------------------------
-        local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+        local TeleportTab = Window:CreateTab("Teleporte", 4483362458)
 
-        TeleportTab:CreateSection("Mode & Target")
+        TeleportTab:CreateSection("Modo e Alvo")
 
         TeleportTab:CreateDropdown({
-            Name = "Teleport Mode",
+            Name = "Modo de Teleporte",
             Options = {"ToPlayer","ToLobby","Smooth"},
             CurrentOption = {TP.Mode},
             MultipleOptions = false,
@@ -1458,7 +1711,7 @@ do
         })
 
         TeleportTab:CreateDropdown({
-            Name = "Select Player",
+            Name = "Selecionar Jogador",
             Options = (function()
                 local list = {}
                 for _, plr in ipairs(Services.Players:GetPlayers()) do
@@ -1482,14 +1735,14 @@ do
         })
 
         TeleportTab:CreateButton({
-            Name = "Teleport to Target",
+            Name = "Teleportar para Alvo",
             Callback = function()
                 teleportToTarget()
             end
         })
 
         TeleportTab:CreateButton({
-            Name = "Teleport Once More",
+            Name = "Teleportar Novamente",
             Callback = function()
                 if TP.Target then
                     teleportToTarget()
@@ -1498,16 +1751,16 @@ do
         })
 
         TeleportTab:CreateButton({
-            Name = "Teleport to Random Player",
+            Name = "Teleportar para Jogador Aleatório",
             Callback = function()
                 randomTeleport()
             end
         })
 
-        TeleportTab:CreateSection("Safety & Follow")
+        TeleportTab:CreateSection("Segurança e Seguir")
 
         TeleportTab:CreateSlider({
-            Name = "Safe Radius",
+            Name = "Raio de Segurança",
             Range = {1, 10},
             Increment = 1,
             CurrentValue = TP.SafeRadius,
@@ -1518,7 +1771,7 @@ do
         })
 
         TeleportTab:CreateSlider({
-            Name = "Side Offset",
+            Name = "Deslocamento Lateral",
             Range = {0, 10},
             Increment = 0.5,
             CurrentValue = TP.SideOffset,
@@ -1529,7 +1782,7 @@ do
         })
 
         TeleportTab:CreateToggle({
-            Name = "Auto Follow Target",
+            Name = "Seguir Alvo Automaticamente",
             CurrentValue = TP.AutoFollow,
             Callback = function(Value)
                 TP.AutoFollow = Value
@@ -1541,7 +1794,7 @@ do
         })
 
         TeleportTab:CreateToggle({
-            Name = "Orbit Target (requires Auto Follow)",
+            Name = "Orbitar Alvo (requer Seguir Auto)",
             CurrentValue = TP.Orbit,
             Callback = function(Value)
                 if not TP.AutoFollow then
@@ -1554,7 +1807,7 @@ do
         })
 
         TeleportTab:CreateToggle({
-            Name = "Stay Above Target",
+            Name = "Ficar Acima do Alvo",
             CurrentValue = TP.StayAbove,
             Callback = function(Value)
                 TP.StayAbove = Value
@@ -1563,7 +1816,7 @@ do
         })
 
         TeleportTab:CreateToggle({
-            Name = "Snap Height",
+            Name = "Ajustar Altura",
             CurrentValue = TP.SnapHeight,
             Callback = function(Value)
                 TP.SnapHeight = Value
@@ -1572,7 +1825,7 @@ do
         })
 
         TeleportTab:CreateSlider({
-            Name = "Extra Height Offset",
+            Name = "Deslocamento Extra de Altura",
             Range = {-20, 20},
             Increment = 1,
             CurrentValue = TP.OffsetUp,
@@ -1585,12 +1838,12 @@ do
         -----------------------------------------------------------------
         -- MISC TAB
         -----------------------------------------------------------------
-        local MiscTab = Window:CreateTab("Misc", 4483362458)
+        local MiscTab = Window:CreateTab("Diversos", 4483362458)
 
-        MiscTab:CreateSection("Visibility & FPS")
+        MiscTab:CreateSection("Visibilidade e FPS")
 
         MiscTab:CreateToggle({
-            Name = "Invisibility",
+            Name = "Invisibilidade",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.Invis = Value
@@ -1600,7 +1853,7 @@ do
         })
 
         MiscTab:CreateToggle({
-            Name = "FPS Booster",
+            Name = "Aumentar FPS",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.FPSBoost = Value
@@ -1614,7 +1867,7 @@ do
         })
 
         MiscTab:CreateToggle({
-            Name = "Freeze Position",
+            Name = "Congelar Posição",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.Freeze = Value
@@ -1631,10 +1884,10 @@ do
         -----------------------------------------------------------------
         local ESPTab = Window:CreateTab("ESP", 4483362458)
 
-        ESPTab:CreateSection("ESP Master")
+        ESPTab:CreateSection("ESP Principal")
 
         ESPTab:CreateToggle({
-            Name = "ESP Master",
+            Name = "ESP Principal",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESP = Value
@@ -1644,7 +1897,7 @@ do
         })
 
         ESPTab:CreateToggle({
-            Name = "Boxes",
+            Name = "Caixas",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESPBox = Value
@@ -1653,7 +1906,7 @@ do
         })
 
         ESPTab:CreateToggle({
-            Name = "Health Text",
+            Name = "Texto de Vida",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESPHealth = Value
@@ -1662,7 +1915,7 @@ do
         })
 
         ESPTab:CreateToggle({
-            Name = "Name / Distance",
+            Name = "Nome / Distância",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESPNameDist = Value
@@ -1671,7 +1924,7 @@ do
         })
 
         ESPTab:CreateToggle({
-            Name = "Tracers",
+            Name = "Linhas",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESPTracers = Value
@@ -1682,12 +1935,12 @@ do
         -----------------------------------------------------------------
         -- DESTRUCTIVE AURA TAB
         -----------------------------------------------------------------
-        local AuraTab = Window:CreateTab("Destructive Aura", 4483362458)
+        local AuraTab = Window:CreateTab("Aura Destrutiva", 4483362458)
 
-        AuraTab:CreateSection("Aura Control")
+        AuraTab:CreateSection("Controle de Aura")
 
         AuraTab:CreateToggle({
-            Name = "Destructive Aura",
+            Name = "Aura Destrutiva",
             CurrentValue = false,
             Callback = function(Value)
                 Aura.Enabled = Value
@@ -1696,7 +1949,7 @@ do
         })
 
         AuraTab:CreateToggle({
-            Name = "Break Buildings / Harvest Debris",
+            Name = "Quebrar Construções / Coletar Destroços",
             CurrentValue = false,
             Callback = function(Value)
                 Aura.BreakEnabled = Value
@@ -1705,7 +1958,7 @@ do
         })
 
         AuraTab:CreateSlider({
-            Name = "Aura Radius",
+            Name = "Raio da Aura",
             Range = {20, 120},
             Increment = 5,
             CurrentValue = Aura.Radius,
@@ -1716,7 +1969,7 @@ do
         })
 
         AuraTab:CreateSlider({
-            Name = "Aura Force",
+            Name = "Força da Aura",
             Range = {500, 4000},
             Increment = 100,
             CurrentValue = Aura.Force,
@@ -1729,12 +1982,12 @@ do
         -----------------------------------------------------------------
         -- KEYBINDS TAB (RAYFIELD KEYBINDS)
         -----------------------------------------------------------------
-        local KeybindsTab = Window:CreateTab("Keybinds", 4483362458)
+        local KeybindsTab = Window:CreateTab("Teclas de Atalho", 4483362458)
 
-        KeybindsTab:CreateSection("Toggle Binds")
+        KeybindsTab:CreateSection("Atalhos de Alternância")
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Ring Parts",
+            Name = "Alternar Partes do Anel",
             CurrentKeybind = keybinds.RingParts,
             HoldToInteract = false,
             Flag = "RingPartsBind",
@@ -1746,7 +1999,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Flight",
+            Name = "Alternar Voo",
             CurrentKeybind = keybinds.Flight,
             HoldToInteract = false,
             Flag = "FlightBind",
@@ -1761,7 +2014,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Godmode",
+            Name = "Alternar Modo Deus",
             CurrentKeybind = keybinds.Godmode,
             HoldToInteract = false,
             Flag = "GodBind",
@@ -1778,7 +2031,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Menu Visibility",
+            Name = "Alternar Visibilidade do Menu",
             CurrentKeybind = keybinds.Menu,
             HoldToInteract = false,
             Flag = "MenuBind",
@@ -1791,7 +2044,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Noclip",
+            Name = "Alternar Atravessar Paredes",
             CurrentKeybind = keybinds.Noclip,
             HoldToInteract = false,
             Flag = "NoclipBind",
@@ -1806,7 +2059,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Teleport to Target",
+            Name = "Teleportar para Alvo",
             CurrentKeybind = keybinds.Teleport,
             HoldToInteract = false,
             Flag = "TeleportBind",
@@ -1817,7 +2070,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Random Teleport",
+            Name = "Teleporte Aleatório",
             CurrentKeybind = keybinds.RandomTeleport,
             HoldToInteract = false,
             Flag = "RandomTpBind",
@@ -1832,8 +2085,8 @@ do
         -----------------------------------------------------------------
         pcall(function()
             Services.StarterGui:SetCore("SendNotification", {
-                Title = "ArabeScripts Loaded",
-                Text = "ArabeScripts Hub Loaded Successfully!",
+                Title = "ArabeScripts Carregado",
+                Text = "Hub ArabeScripts Carregado com Sucesso!",
                 Duration = 5
             })
         end)
