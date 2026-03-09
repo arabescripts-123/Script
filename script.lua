@@ -2,10 +2,8 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 ---------------------------------------------------------------------
--- MAIN HUB
+-- MAIN HUB (RAYFIELD UI)
 ---------------------------------------------------------------------
-
-do
 
         -----------------------------------------------------------------
         -- SERVICES / ENV
@@ -53,9 +51,9 @@ do
         local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
         local Window = Rayfield:CreateWindow({
-            Name = "ArabeScripts",
-            LoadingTitle = "ArabeScripts Hub",
-            LoadingSubtitle = "By ArabeScripts",
+            Name = "WINTER HUB | v4.3",
+            LoadingTitle = "Winter Hub de Desastres Naturais",
+            LoadingSubtitle = "Por Winter",
             ConfigurationSaving = {
                 Enabled = false
             },
@@ -124,6 +122,47 @@ do
             end)
         end
 
+        local Network = GENV.Network
+
+        -----------------------------------------------------------------
+        -- SHARED PHYSICS PREP (USED BY AURA / BLACKHOLE / MAP DESTROY)
+        -----------------------------------------------------------------
+        local function preparePhysicsPart(p)
+            if not (p and p:IsA("BasePart")) then return end
+            if not p:IsDescendantOf(workspace) then return end
+            if p:IsDescendantOf(LocalPlayer.Character or Instance.new("Model")) then return end
+
+            if p.Anchored then
+                p.Anchored = false
+            end
+
+            local oldProps = p.CustomPhysicalProperties
+            local density = 0.1
+            local friction = 0
+            local elasticity = 0
+            local frictionWeight = 0
+            local elasticityWeight = 0
+
+            if oldProps then
+                density = math.clamp(oldProps.Density, 0.0001, 100)
+                friction = oldProps.Friction
+                elasticity = oldProps.Elasticity
+                frictionWeight = oldProps.FrictionWeight
+                elasticityWeight = oldProps.ElasticityWeight
+            end
+
+            p.CustomPhysicalProperties = PhysicalProperties.new(density, friction, elasticity, frictionWeight, elasticityWeight)
+            p.CanCollide = false
+
+            -- Push through global network system so velocity sticks & replicates better
+            if not table.find(Network.BaseParts, p) then
+                table.insert(Network.BaseParts, p)
+            end
+        end
+
+        -----------------------------------------------------------------
+        -- RING SETTINGS
+        -----------------------------------------------------------------
         local Ring = {
             Radius         = 50,
             MinDist        = 6,
@@ -173,6 +212,11 @@ do
 
                 if not table.find(Ring.Parts, part) then
                     table.insert(Ring.Parts, part)
+                end
+
+                -- also feed into Network system
+                if not table.find(Network.BaseParts, part) then
+                    table.insert(Network.BaseParts, part)
                 end
 
                 return true
@@ -424,7 +468,7 @@ do
         end)
 
         -----------------------------------------------------------------
-        -- DESTRUCTIVE AURA
+        -- DESTRUCTIVE AURA (IMPROVED)
         -----------------------------------------------------------------
         local Aura = {
             Enabled      = false,
@@ -432,9 +476,9 @@ do
             Radius       = 80,
             Force        = 2600,
             YClamp       = 60,
-            Cooldown     = 0.15,
+            Cooldown     = 0.08,
             LastTime     = 0,
-            TargetFilter = {"Baseplate", "SpawnLocation"}
+            TargetFilter = {"Baseplate", "SpawnLocation", "lobby"}
         }
 
         local function isIgnoredAuraPart(part)
@@ -448,7 +492,7 @@ do
             return false
         end
 
-        Services.RunService.Heartbeat:Connect(function(dt)
+        Services.RunService.Heartbeat:Connect(function()
             if not Aura.Enabled then return end
             local root = getRoot()
             if not root then return end
@@ -458,43 +502,41 @@ do
             Aura.LastTime = now
 
             local rootPos = root.Position
-            local parts = getNearbyParts(rootPos, Aura.Radius)
+            local nearby = getNearbyParts(rootPos, Aura.Radius)
 
-            for _, p in ipairs(parts) do
-                if p:IsA("BasePart") and p ~= root then
-                    if not p:IsDescendantOf(LocalPlayer.Character) then
-                        if (not p.Anchored) and not isIgnoredAuraPart(p) then
-                            retainRingPart(p)
+            for _, p in ipairs(nearby) do
+                if p:IsA("BasePart") and p ~= root and not p:IsDescendantOf(LocalPlayer.Character) then
+                    if not isIgnoredAuraPart(p) then
+                        preparePhysicsPart(p)
 
-                            if Aura.BreakEnabled then
-                                p.CanCollide = false
-                            end
-
-                            local offset = p.Position - rootPos
-                            local dist = offset.Magnitude
-                            if dist < 1 then
-                                offset = Vector3.new(1, 0, 0)
-                                dist = 1
-                            end
-
-                            local dir = offset.Unit
-                            local push = dir * Aura.Force
-                            push = Vector3.new(
-                                math.clamp(push.X, -1500, 1500),
-                                math.clamp(push.Y + 200, -Aura.YClamp, Aura.YClamp),
-                                math.clamp(push.Z, -1500, 1500)
-                            )
-
-                            local newVel = p.Velocity + push
-                            newVel = Vector3.new(
-                                math.clamp(newVel.X, -400, 400),
-                                math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
-                                math.clamp(newVel.Z, -400, 400)
-                            )
-
-                            p.Velocity = newVel
-                            p.AssemblyLinearVelocity = newVel
+                        if Aura.BreakEnabled then
+                            p.CanCollide = false
                         end
+
+                        local offset = p.Position - rootPos
+                        local dist = offset.Magnitude
+                        if dist < 1 then
+                            offset = Vector3.new(1, 0, 0)
+                            dist = 1
+                        end
+
+                        local dir = offset.Unit
+                        local push = dir * Aura.Force
+                        push = Vector3.new(
+                            math.clamp(push.X, -2000, 2000),
+                            math.clamp(push.Y + 240, -Aura.YClamp, Aura.YClamp),
+                            math.clamp(push.Z, -2000, 2000)
+                        )
+
+                        local newVel = p.Velocity + push
+                        newVel = Vector3.new(
+                            math.clamp(newVel.X, -550, 550),
+                            math.clamp(newVel.Y, -Aura.YClamp, Aura.YClamp),
+                            math.clamp(newVel.Z, -550, 550)
+                        )
+
+                        p.Velocity = newVel
+                        p.AssemblyLinearVelocity = newVel
                     end
                 end
             end
@@ -546,12 +588,13 @@ do
                         targetPos = center + dir.Unit * baseR
 
                     elseif Ring.Pattern == "Chaos" then
+                        local t = tick() * Ring.SphereSpeed
                         local baseY = center.Y
-                        local yOffset = math.sin((offset.X + offset.Z) * 0.12 + tick() * 2.2) * (Ring.Height * 0.35)
+                        local yOffset = math.sin((offset.X + offset.Z) * 0.12 + t * 2.2) * (Ring.Height * 0.35)
 
-                        local noiseX = (math.noise(offset.X * 0.05, tick()) or 0) * Ring.ChaosAmount
-                        local noiseZ = (math.noise(offset.Z * 0.05, tick() + 100) or 0) * Ring.ChaosAmount
-                        local noiseY = (math.noise(offset.X * 0.05, offset.Z * 0.05, tick() + 200) or 0) * (Ring.ChaosAmount * 0.7)
+                        local noiseX = (math.noise(offset.X * 0.05, t) or 0) * Ring.ChaosAmount
+                        local noiseZ = (math.noise(offset.Z * 0.05, t + 100) or 0) * Ring.ChaosAmount
+                        local noiseY = (math.noise(offset.X * 0.05, offset.Z * 0.05, t + 200) or 0) * (Ring.ChaosAmount * 0.7)
 
                         targetPos = Vector3.new(
                             center.X + math.cos(newAngle) * r + noiseX,
@@ -1199,16 +1242,169 @@ do
         end
 
         -----------------------------------------------------------------
+        -- BLACKHOLE SYSTEM (IMPROVED)
+        -----------------------------------------------------------------
+        local Blackhole = {
+            Enabled     = false,
+            Radius      = 100,
+            PullForce   = 3500,
+            VerticalPull= 120,
+            CenterMode  = "Player", -- Player / Cursor
+            CenterPart  = nil,
+            Cooldown    = 0.05,
+            LastTime    = 0,
+            DestroyCore = true
+        }
+
+        local function getBlackholeCenter()
+            local root = getRoot()
+            if Blackhole.CenterMode == "Cursor" then
+                local cam = workspace.CurrentCamera
+                local mouse = LocalPlayer:GetMouse()
+                if cam and mouse then
+                    local unitRay = cam:ScreenPointToRay(mouse.X, mouse.Y)
+                    local origin = unitRay.Origin
+                    local dir = unitRay.Direction * 200
+                    local raycastParams = RaycastParams.new()
+                    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+                    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+                    local result = workspace:Raycast(origin, dir, raycastParams)
+                    if result then
+                        return result.Position
+                    else
+                        return origin + dir
+                    end
+                end
+            end
+            return root and root.Position or Vector3.new()
+        end
+
+        Services.RunService.Heartbeat:Connect(function()
+            if not Blackhole.Enabled then return end
+            local now = tick()
+            if now - Blackhole.LastTime < Blackhole.Cooldown then return end
+            Blackhole.LastTime = now
+
+            local centerPos = getBlackholeCenter()
+            local parts = getNearbyParts(centerPos, Blackhole.Radius)
+
+            for _, p in ipairs(parts) do
+                if p:IsA("BasePart") and not p:IsDescendantOf(LocalPlayer.Character) then
+                    if Blackhole.DestroyCore and (p.Name:lower():find("spawn") or p.Name:lower():find("baseplate")) then
+                        p.Anchored = false
+                    end
+
+                    preparePhysicsPart(p)
+
+                    local offset = centerPos - p.Position
+                    local dist = offset.Magnitude
+                    if dist < 1 then dist = 1 end
+                    local dir = offset.Unit
+
+                    local pull = dir * Blackhole.PullForce
+                    pull = Vector3.new(
+                        math.clamp(pull.X, -2200, 2200),
+                        math.clamp(pull.Y + Blackhole.VerticalPull, -Blackhole.VerticalPull, Blackhole.VerticalPull),
+                        math.clamp(pull.Z, -2200, 2200)
+                    )
+
+                    local newVel = p.Velocity + pull
+                    newVel = Vector3.new(
+                        math.clamp(newVel.X, -650, 650),
+                        math.clamp(newVel.Y, -Blackhole.VerticalPull, Blackhole.VerticalPull),
+                        math.clamp(newVel.Z, -650, 650)
+                    )
+
+                    p.Velocity = newVel
+                    p.AssemblyLinearVelocity = newVel
+                end
+            end
+        end)
+
+        -----------------------------------------------------------------
+        -- MAP DESTRUCTION SYSTEM (IMPROVED & TIED TO NETWORK)
+        -----------------------------------------------------------------
+        local MapDestruction = {
+            CurrentMapName = "",
+            KnownMaps = {
+                "Heights School",
+                "Launch Land",
+                "Surf Central",
+                "Sky Tower",
+                "Modest Headquarters",
+                "Glass Office",
+                "Raving Raceway",
+                "Trailer Park",
+                "Lucky Mart",
+                "Prison Panic",
+                "Party Palace",
+                "Coastal Quickstop",
+                "Fort Indestructible",
+                "Rainbow Ride",
+                "Deadly Decisions"
+            }
+        }
+
+        local function findCurrentMapModel()
+            local best
+            for _, inst in ipairs(workspace:GetChildren()) do
+                if inst:IsA("Model") then
+                    local name = inst.Name:lower()
+                    if not name:find("lobby") and not name:find("baseplate") and not name:find("spawn") then
+                        best = inst
+                        break
+                    end
+                end
+            end
+            return best
+        end
+
+        local function destroyWholeModel(model)
+            if not model then return 0 end
+            local count = 0
+            for _, obj in ipairs(model:GetDescendants()) do
+                if obj:IsA("BasePart") and not obj:IsDescendantOf(LocalPlayer.Character) then
+                    preparePhysicsPart(obj)
+                    obj.Material = Enum.Material.SmoothPlastic
+                    obj.Color = Color3.fromRGB(0, 0, 0)
+
+                    local v = Vector3.new(math.random(-600,600), math.random(250,500), math.random(-600,600))
+                    obj.Velocity = v
+                    obj.AssemblyLinearVelocity = v
+                    count += 1
+                end
+            end
+            return count
+        end
+
+        local function destroyEntireMap()
+            local mapModel = findCurrentMapModel()
+            local total = 0
+
+            if mapModel then
+                total = destroyWholeModel(mapModel)
+            end
+
+            for _, inst in ipairs(workspace:GetDescendants()) do
+                if inst:IsA("Model") and inst.Name:lower():find("map") then
+                    total = total + destroyWholeModel(inst)
+                end
+            end
+
+            return total
+        end
+
+        -----------------------------------------------------------------
         -- RAYFIELD TABS & WIDGETS
         -----------------------------------------------------------------
 
         -- MAIN / RING TAB
-        local RingTab = Window:CreateTab("Ring Parts", 4483362458)
+        local RingTab = Window:CreateTab("Anel de Partes", 4483362458)
 
-        RingTab:CreateSection("Ring Control")
+        RingTab:CreateSection("Controle do Anel")
 
         RingTab:CreateToggle({
-            Name = "Ring Parts",
+            Name = "Anel de Partes",
             CurrentValue = false,
             Callback = function(Value)
                 Ring.Enabled = Value
@@ -1217,7 +1413,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Radius",
+            Name = "Raio",
             Range = {10, 200},
             Increment = 5,
             CurrentValue = Ring.Radius,
@@ -1228,7 +1424,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Inner Radius",
+            Name = "Raio Interno",
             Range = {2, 20},
             Increment = 1,
             CurrentValue = Ring.MinDist,
@@ -1239,7 +1435,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Height Offset",
+            Name = "Deslocamento de Altura",
             Range = {0, 20},
             Increment = 1,
             CurrentValue = Ring.HeightOffset,
@@ -1250,7 +1446,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Ring Force",
+            Name = "Força do Anel",
             Range = {200, 2500},
             Increment = 100,
             CurrentValue = Ring.Force,
@@ -1261,7 +1457,7 @@ do
         })
 
         RingTab:CreateSlider({
-            Name = "Ring Speed",
+            Name = "Velocidade do Anel",
             Range = {1, 24},
             Increment = 1,
             CurrentValue = Ring.Speed,
@@ -1273,7 +1469,7 @@ do
         })
 
         RingTab:CreateDropdown({
-            Name = "Pattern",
+            Name = "Padrão",
             Options = {"Orbit","Vertical","Wave","Sphere","SpherePulsing","Chaos","Spiral","Helix","Pulse","RandomShell"},
             CurrentOption = {Ring.Pattern},
             MultipleOptions = false,
@@ -1286,12 +1482,12 @@ do
         -----------------------------------------------------------------
         -- FLIGHT TAB
         -----------------------------------------------------------------
-        local FlightTab = Window:CreateTab("Flight", 4483362458)
+        local FlightTab = Window:CreateTab("Voo", 4483362458)
 
-        FlightTab:CreateSection("Flight Control")
+        FlightTab:CreateSection("Controle de Voo")
 
         FlightTab:CreateToggle({
-            Name = "Flight",
+            Name = "Voo",
             CurrentValue = false,
             Callback = function(Value)
                 if Value then
@@ -1303,7 +1499,7 @@ do
         })
 
         FlightTab:CreateSlider({
-            Name = "Flight Speed",
+            Name = "Velocidade de Voo",
             Range = {10, 300},
             Increment = 5,
             CurrentValue = Movement.FlightSpeed,
@@ -1314,7 +1510,7 @@ do
         })
 
         FlightTab:CreateSlider({
-            Name = "WalkSpeed",
+            Name = "Velocidade de Caminhada",
             Range = {8, 200},
             Increment = 2,
             CurrentValue = Movement.BaseWalk,
@@ -1326,7 +1522,7 @@ do
         })
 
         FlightTab:CreateSlider({
-            Name = "JumpPower",
+            Name = "Força do Pulo",
             Range = {20, 300},
             Increment = 5,
             CurrentValue = Movement.BaseJump,
@@ -1340,11 +1536,11 @@ do
         -----------------------------------------------------------------
         -- GODMODE TAB
         -----------------------------------------------------------------
-        local GodTab = Window:CreateTab("Godmode", 4483362458)
-        GodTab:CreateSection("Godmode Control")
+        local GodTab = Window:CreateTab("Modo Deus", 4483362458)
+        GodTab:CreateSection("Controle do Modo Deus")
 
         GodTab:CreateToggle({
-            Name = "Godmode",
+            Name = "Modo Deus",
             CurrentValue = false,
             Callback = function(Value)
                 God.Enabled = Value
@@ -1360,7 +1556,7 @@ do
         })
 
         GodTab:CreateSlider({
-            Name = "Auto-Heal Threshold %",
+            Name = "Limite de Cura Automática %",
             Range = {God.MinHeal, God.MaxHeal},
             Increment = 5,
             CurrentValue = God.HealThresh,
@@ -1371,7 +1567,7 @@ do
         })
 
         GodTab:CreateSlider({
-            Name = "Max Health",
+            Name = "Vida Máxima",
             Range = {God.MinMaxHP, God.MaxMaxHP},
             Increment = 50,
             CurrentValue = Movement.BaseMaxHP,
@@ -1382,7 +1578,7 @@ do
         })
 
         GodTab:CreateToggle({
-            Name = "Anti-Fall Damage",
+            Name = "Anti-Dano de Queda",
             CurrentValue = God.AntiFall,
             Callback = function(Value)
                 God.AntiFall = Value
@@ -1393,12 +1589,12 @@ do
         -----------------------------------------------------------------
         -- ADVANCED / NOCLIP TAB
         -----------------------------------------------------------------
-        local AdvancedTab = Window:CreateTab("Advanced", 4483362458)
+        local AdvancedTab = Window:CreateTab("Avançado", 4483362458)
 
-        AdvancedTab:CreateSection("Movement & Utility")
+        AdvancedTab:CreateSection("Movimento e Utilidades")
 
         AdvancedTab:CreateToggle({
-            Name = "Noclip",
+            Name = "Atravessar Paredes",
             CurrentValue = false,
             Callback = function(Value)
                 Noclip.Enabled = Value
@@ -1410,7 +1606,7 @@ do
         })
 
         AdvancedTab:CreateToggle({
-            Name = "Anti AFK",
+            Name = "Anti-Ausente",
             CurrentValue = false,
             Callback = function(Value)
                 AntiAFK.Enabled = Value
@@ -1431,7 +1627,7 @@ do
         })
 
         AdvancedTab:CreateToggle({
-            Name = "Auto Rejoin",
+            Name = "Reconectar Automático",
             CurrentValue = false,
             Callback = function(Value)
                 AutoRejoin.Enabled = Value
@@ -1442,12 +1638,12 @@ do
         -----------------------------------------------------------------
         -- TELEPORT TAB
         -----------------------------------------------------------------
-        local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+        local TeleportTab = Window:CreateTab("Teleporte", 4483362458)
 
-        TeleportTab:CreateSection("Mode & Target")
+        TeleportTab:CreateSection("Modo e Alvo")
 
         TeleportTab:CreateDropdown({
-            Name = "Teleport Mode",
+            Name = "Modo de Teleporte",
             Options = {"ToPlayer","ToLobby","Smooth"},
             CurrentOption = {TP.Mode},
             MultipleOptions = false,
@@ -1458,7 +1654,7 @@ do
         })
 
         TeleportTab:CreateDropdown({
-            Name = "Select Player",
+            Name = "Selecionar Jogador",
             Options = (function()
                 local list = {}
                 for _, plr in ipairs(Services.Players:GetPlayers()) do
@@ -1482,14 +1678,14 @@ do
         })
 
         TeleportTab:CreateButton({
-            Name = "Teleport to Target",
+            Name = "Teleportar para Alvo",
             Callback = function()
                 teleportToTarget()
             end
         })
 
         TeleportTab:CreateButton({
-            Name = "Teleport Once More",
+            Name = "Teleportar Novamente",
             Callback = function()
                 if TP.Target then
                     teleportToTarget()
@@ -1498,16 +1694,16 @@ do
         })
 
         TeleportTab:CreateButton({
-            Name = "Teleport to Random Player",
+            Name = "Teleportar para Jogador Aleatório",
             Callback = function()
                 randomTeleport()
             end
         })
 
-        TeleportTab:CreateSection("Safety & Follow")
+        TeleportTab:CreateSection("Segurança e Seguir")
 
         TeleportTab:CreateSlider({
-            Name = "Safe Radius",
+            Name = "Raio de Segurança",
             Range = {1, 10},
             Increment = 1,
             CurrentValue = TP.SafeRadius,
@@ -1518,7 +1714,7 @@ do
         })
 
         TeleportTab:CreateSlider({
-            Name = "Side Offset",
+            Name = "Deslocamento Lateral",
             Range = {0, 10},
             Increment = 0.5,
             CurrentValue = TP.SideOffset,
@@ -1529,7 +1725,7 @@ do
         })
 
         TeleportTab:CreateToggle({
-            Name = "Auto Follow Target",
+            Name = "Seguir Alvo Automaticamente",
             CurrentValue = TP.AutoFollow,
             Callback = function(Value)
                 TP.AutoFollow = Value
@@ -1541,7 +1737,7 @@ do
         })
 
         TeleportTab:CreateToggle({
-            Name = "Orbit Target (requires Auto Follow)",
+            Name = "Orbitar Alvo (requer Seguir Auto)",
             CurrentValue = TP.Orbit,
             Callback = function(Value)
                 if not TP.AutoFollow then
@@ -1554,7 +1750,7 @@ do
         })
 
         TeleportTab:CreateToggle({
-            Name = "Stay Above Target",
+            Name = "Ficar Acima do Alvo",
             CurrentValue = TP.StayAbove,
             Callback = function(Value)
                 TP.StayAbove = Value
@@ -1563,7 +1759,7 @@ do
         })
 
         TeleportTab:CreateToggle({
-            Name = "Snap Height",
+            Name = "Ajustar Altura",
             CurrentValue = TP.SnapHeight,
             Callback = function(Value)
                 TP.SnapHeight = Value
@@ -1572,7 +1768,7 @@ do
         })
 
         TeleportTab:CreateSlider({
-            Name = "Extra Height Offset",
+            Name = "Deslocamento de Altura Extra",
             Range = {-20, 20},
             Increment = 1,
             CurrentValue = TP.OffsetUp,
@@ -1585,12 +1781,12 @@ do
         -----------------------------------------------------------------
         -- MISC TAB
         -----------------------------------------------------------------
-        local MiscTab = Window:CreateTab("Misc", 4483362458)
+        local MiscTab = Window:CreateTab("Diversos", 4483362458)
 
-        MiscTab:CreateSection("Visibility & FPS")
+        MiscTab:CreateSection("Visibilidade e FPS")
 
         MiscTab:CreateToggle({
-            Name = "Invisibility",
+            Name = "Invisibilidade",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.Invis = Value
@@ -1600,7 +1796,7 @@ do
         })
 
         MiscTab:CreateToggle({
-            Name = "FPS Booster",
+            Name = "Aumentar FPS",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.FPSBoost = Value
@@ -1614,7 +1810,7 @@ do
         })
 
         MiscTab:CreateToggle({
-            Name = "Freeze Position",
+            Name = "Congelar Posição",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.Freeze = Value
@@ -1631,10 +1827,10 @@ do
         -----------------------------------------------------------------
         local ESPTab = Window:CreateTab("ESP", 4483362458)
 
-        ESPTab:CreateSection("ESP Master")
+        ESPTab:CreateSection("ESP Principal")
 
         ESPTab:CreateToggle({
-            Name = "ESP Master",
+            Name = "ESP Principal",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESP = Value
@@ -1644,7 +1840,7 @@ do
         })
 
         ESPTab:CreateToggle({
-            Name = "Boxes",
+            Name = "Caixas",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESPBox = Value
@@ -1653,7 +1849,7 @@ do
         })
 
         ESPTab:CreateToggle({
-            Name = "Health Text",
+            Name = "Texto de Vida",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESPHealth = Value
@@ -1662,7 +1858,7 @@ do
         })
 
         ESPTab:CreateToggle({
-            Name = "Name / Distance",
+            Name = "Nome / Distância",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESPNameDist = Value
@@ -1671,7 +1867,7 @@ do
         })
 
         ESPTab:CreateToggle({
-            Name = "Tracers",
+            Name = "Rastreadores",
             CurrentValue = false,
             Callback = function(Value)
                 MiscState.ESPTracers = Value
@@ -1680,14 +1876,14 @@ do
         })
 
         -----------------------------------------------------------------
-        -- DESTRUCTIVE AURA TAB
+        -- DESTRUCTIVE AURA TAB (UI)
         -----------------------------------------------------------------
-        local AuraTab = Window:CreateTab("Destructive Aura", 4483362458)
+        local AuraTab = Window:CreateTab("Aura Destrutiva", 4483362458)
 
-        AuraTab:CreateSection("Aura Control")
+        AuraTab:CreateSection("Controle da Aura")
 
         AuraTab:CreateToggle({
-            Name = "Destructive Aura",
+            Name = "Aura Destrutiva",
             CurrentValue = false,
             Callback = function(Value)
                 Aura.Enabled = Value
@@ -1696,7 +1892,7 @@ do
         })
 
         AuraTab:CreateToggle({
-            Name = "Break Buildings / Harvest Debris",
+            Name = "Quebrar Construções / Coletar Destroços",
             CurrentValue = false,
             Callback = function(Value)
                 Aura.BreakEnabled = Value
@@ -1705,7 +1901,7 @@ do
         })
 
         AuraTab:CreateSlider({
-            Name = "Aura Radius",
+            Name = "Raio da Aura",
             Range = {20, 120},
             Increment = 5,
             CurrentValue = Aura.Radius,
@@ -1716,7 +1912,7 @@ do
         })
 
         AuraTab:CreateSlider({
-            Name = "Aura Force",
+            Name = "Força da Aura",
             Range = {500, 4000},
             Increment = 100,
             CurrentValue = Aura.Force,
@@ -1727,14 +1923,138 @@ do
         })
 
         -----------------------------------------------------------------
+        -- BLACKHOLE TAB (NEW)
+        -----------------------------------------------------------------
+        local BlackTab = Window:CreateTab("Buraco Negro", 4483362458)
+
+        BlackTab:CreateSection("Controle do Buraco Negro")
+
+        BlackTab:CreateToggle({
+            Name = "Ativar Buraco Negro",
+            CurrentValue = false,
+            Callback = function(Value)
+                Blackhole.Enabled = Value
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateDropdown({
+            Name = "Modo de Centro",
+            Options = {"Jogador","Cursor"},
+            CurrentOption = {Blackhole.CenterMode},
+            MultipleOptions = false,
+            Callback = function(opt)
+                Blackhole.CenterMode = opt[1]
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateSlider({
+            Name = "Raio do Buraco Negro",
+            Range = {30, 200},
+            Increment = 5,
+            CurrentValue = Blackhole.Radius,
+            Callback = function(Value)
+                Blackhole.Radius = Value
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateSlider({
+            Name = "Força de Atração",
+            Range = {500, 6000},
+            Increment = 100,
+            CurrentValue = Blackhole.PullForce,
+            Callback = function(Value)
+                Blackhole.PullForce = Value
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateSlider({
+            Name = "Limite de Atração Vertical",
+            Range = {40, 250},
+            Increment = 5,
+            CurrentValue = Blackhole.VerticalPull,
+            Callback = function(Value)
+                Blackhole.VerticalPull = Value
+                playSound("12221967")
+            end
+        })
+
+        BlackTab:CreateToggle({
+            Name = "Tentar Destruir Núcleo (Spawn/Base)",
+            CurrentValue = Blackhole.DestroyCore,
+            Callback = function(Value)
+                Blackhole.DestroyCore = Value
+                playSound("12221967")
+            end
+        })
+
+        -----------------------------------------------------------------
+        -- MAP DESTRUCTION TAB (UPDATED)
+        -----------------------------------------------------------------
+        local MapTab = Window:CreateTab("Destruir Mapa", 4483362458)
+
+        MapTab:CreateSection("Destruir Mapa Inteiro")
+
+        MapTab:CreateButton({
+            Name = "Destruir Mapa Atual (Brutal)",
+            Callback = function()
+                local total = destroyEntireMap()
+                playSound("12221967")
+                pcall(function()
+                    Services.StarterGui:SetCore("SendNotification", {
+                        Title = "❄ Winter Hub",
+                        Text = "Destruídas ~" .. tostring(total) .. " partes no mapa atual.",
+                        Duration = 4
+                    })
+                end)
+            end
+        })
+
+        MapTab:CreateDropdown({
+            Name = "Mapas Conhecidos (para info)",
+            Options = MapDestruction.KnownMaps,
+            CurrentOption = {},
+            MultipleOptions = false,
+            Callback = function(opt)
+                MapDestruction.CurrentMapName = opt[1]
+                playSound("12221967")
+            end
+        })
+
+        MapTab:CreateButton({
+            Name = "Tentar Destruir Todos os Modelos do Mapa",
+            Callback = function()
+                local total = 0
+                for _, inst in ipairs(workspace:GetChildren()) do
+                    if inst:IsA("Model") then
+                        if not inst.Name:lower():find("lobby") and not inst.Name:lower():find("baseplate") then
+                            total = total + destroyWholeModel(inst)
+                        end
+                    end
+                end
+                playSound("12221967")
+                pcall(function()
+                    Services.StarterGui:SetCore("SendNotification", {
+                        Title = "❄ Winter Hub",
+                        Text = "Destruição brutal do mapa: ~" .. tostring(total) .. " partes atingidas.",
+                        Duration = 4
+                    })
+                end)
+            end
+        })
+
+        -----------------------------------------------------------------
         -- KEYBINDS TAB (RAYFIELD KEYBINDS)
         -----------------------------------------------------------------
-        local KeybindsTab = Window:CreateTab("Keybinds", 4483362458)
+        local KeybindsTab = Window:CreateTab("Atalhos", 4483362458)
 
-        KeybindsTab:CreateSection("Toggle Binds")
+        KeybindsTab:CreateSection("Atalhos de Alternância")
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Ring Parts",
+            Name = "Alternar Anel de Partes",
             CurrentKeybind = keybinds.RingParts,
             HoldToInteract = false,
             Flag = "RingPartsBind",
@@ -1746,7 +2066,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Flight",
+            Name = "Alternar Voo",
             CurrentKeybind = keybinds.Flight,
             HoldToInteract = false,
             Flag = "FlightBind",
@@ -1761,7 +2081,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Godmode",
+            Name = "Alternar Modo Deus",
             CurrentKeybind = keybinds.Godmode,
             HoldToInteract = false,
             Flag = "GodBind",
@@ -1778,20 +2098,19 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Menu Visibility",
+            Name = "Alternar Visibilidade do Menu",
             CurrentKeybind = keybinds.Menu,
             HoldToInteract = false,
             Flag = "MenuBind",
             Callback = function(Key)
                 keybinds.Menu = Key
-                -- Rayfield has built-in hide/show; use its function if desired
-                Window:Toggle() -- hide / show whole UI
+                Window:Toggle()
                 playSound("12221967")
             end
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Toggle Noclip",
+            Name = "Alternar Atravessar Paredes",
             CurrentKeybind = keybinds.Noclip,
             HoldToInteract = false,
             Flag = "NoclipBind",
@@ -1806,7 +2125,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Teleport to Target",
+            Name = "Teleportar para Alvo",
             CurrentKeybind = keybinds.Teleport,
             HoldToInteract = false,
             Flag = "TeleportBind",
@@ -1817,7 +2136,7 @@ do
         })
 
         KeybindsTab:CreateKeybind({
-            Name = "Random Teleport",
+            Name = "Teleporte Aleatório",
             CurrentKeybind = keybinds.RandomTeleport,
             HoldToInteract = false,
             Flag = "RandomTpBind",
@@ -1832,9 +2151,31 @@ do
         -----------------------------------------------------------------
         pcall(function()
             Services.StarterGui:SetCore("SendNotification", {
-                Title = "ArabeScripts Loaded",
-                Text = "ArabeScripts Hub Loaded Successfully!",
+                Title = "❄ Winter Hub Carregado",
+                Text = "Winter Hub de Desastres Naturais [V4.3] (Rayfield UI)",
                 Duration = 5
             })
         end)
-end
+
+        pcall(function()
+            local uid = Services.Players:GetUserIdFromNameAsync("Kl_Kyiru")
+            if uid then
+                local thumbType = Enum.ThumbnailType.HeadShot
+                local thumbSize = Enum.ThumbnailSize.Size420x420
+                local content
+                pcall(function()
+                    content = (select(1, Services.Players:GetUserThumbnailAsync(uid, thumbType, thumbSize)))
+                end)
+                if content then
+                    pcall(function()
+                        Services.StarterGui:SetCore("SendNotification", {
+                            Title = "❄ Aproveite o Winter Hub",
+                            Text = "Aproveite o Winter Hub!",
+                            Icon = content,
+                            Duration = 5
+                        })
+                    end)
+                end
+            end
+        end)
+    end)
